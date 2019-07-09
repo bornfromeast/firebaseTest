@@ -1,45 +1,47 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow
- */
-
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View, TouchableOpacity} from 'react-native';
-import * as firebase from "firebase/app";
-import "firebase/auth";
-import "firebase/firestore";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDB8Al8zXZ5bwVDM269RE5A9wdN3UzV6AY",
-  authDomain: "btn1-191b6.firebaseapp.com",
-  databaseURL: "https://btn1-191b6.firebaseio.com",
-  projectId: "btn1-191b6",
-  storageBucket: "",
-  messagingSenderId: "1060279999693",
-  appId: "1:1060279999693:web:bfad3b884c41f776"
-};
-// Initialize Firebase
-let db = firebase.initializeApp(firebaseConfig);
-
-
-
-const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
-  android:
-    'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
-});
+import {Platform, StyleSheet, Text, View, TouchableOpacity, ActivityIndicator} from 'react-native';
+import firebase from "./src/Firebase";
 
 type Props = {};
 export default class App extends Component<Props> {
+  constructor() {
+    super();
+    this.state = {
+      updated: false,
+      number: null,
+      updating: true
+    }
+  }
+  componentDidMount(){
+    if(!this.state.updated){
+      this.getNumber();
+    }
+  }
+
+
+  getNumber () {
+    console.log(123)
+    let db =  firebase.firestore();
+    let x = db.collection("counters").doc("TA5xKC83fiPiGTWPV62e");
+    let docx = x.get().then((data) => {
+      let doc = data.data();
+      console.log(doc)
+      this.setState((oldState)=>{
+        return {...oldState, updating:false, number:doc.counter, updated:true}
+      })
+    }).catch((e)=>{console.log(e)});
+  }
+
   render() {
     return (
       <View style={styles.container}>
         <Text style={styles.welcome}>Количество кликов</Text>
-        <Text style={styles.instructions}>0</Text>
+        {this.state.updating?
+
+          <ActivityIndicator></ActivityIndicator>
+          :
+          <Text style={styles.instructions}>{this.state.number}</Text>
+        }
         <TouchableOpacity style={styles.btn}>
           <Text style={styles.inBtn}>Добавить</Text>
         </TouchableOpacity>
