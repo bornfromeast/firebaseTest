@@ -9,13 +9,24 @@ export default class App extends Component<Props> {
     this.state = {
       updated: false,
       number: null,
-      updating: true
+      updating: true,
+      dd: false
     }
   }
   componentDidMount(){
     if(!this.state.updated){
       this.getNumber();
     }
+    let db =  firebase.firestore();
+    let x = db.collection("counters").doc("TA5xKC83fiPiGTWPV62e");
+
+    let observer = x.onSnapshot(docSnapshot => {
+      this.setState((oldState)=>{
+        return {...oldState,  number: docSnapshot.data().counter, }
+      })
+    }, err => {
+      console.log(`Encountered error: ${err}`);
+    });
   }
 
 
@@ -24,12 +35,37 @@ export default class App extends Component<Props> {
     let db =  firebase.firestore();
     let x = db.collection("counters").doc("TA5xKC83fiPiGTWPV62e");
     let docx = x.get().then((data) => {
-      let doc = data.data();
-      console.log(doc)
       this.setState((oldState)=>{
-        return {...oldState, updating:false, number:doc.counter, updated:true}
+        return {...oldState, updating:false, number:data.data().counter, updated:true}
       })
     }).catch((e)=>{console.log(e)});
+  }
+
+  _onPressButton = () => {
+    this.setState(function (sd) {
+      return {...sd, dd:true}
+    }, ()=>{
+      let db =  firebase.firestore();
+      let x = db.collection("counters").doc("TA5xKC83fiPiGTWPV62e");
+      let ss = function(oldState){
+        return {...oldState, number:oldState.number+1}
+      }
+      let fun = function(){
+        x.update({
+          counter:this.state.number
+        }).then(()=>{
+
+          console.log("update themn")
+          this.setState(function (sd) {
+            console.log("final set state")
+            return {...sd, dd:false}
+          })
+        });
+      }
+
+      this.setState(ss, fun)
+
+    });
   }
 
   render() {
@@ -42,7 +78,7 @@ export default class App extends Component<Props> {
           :
           <Text style={styles.instructions}>{this.state.number}</Text>
         }
-        <TouchableOpacity style={styles.btn}>
+        <TouchableOpacity style={styles.btn} onPress={this._onPressButton} disabled={this.state.dd}>
           <Text style={styles.inBtn}>Добавить</Text>
         </TouchableOpacity>
       </View>
